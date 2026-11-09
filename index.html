@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AhorraMax - Control de Gastos y Optimización de Ahorro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        },
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b',
+                        darkborder: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Navbar Navigation -->
+    <nav class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent">AhorraMax</span>
+                        <span class="text-xs text-brand-400 font-semibold block sm:inline sm:ml-2 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">Micro-SaaS v1.0</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="resetDataBtn" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 rounded-lg transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> Restablecer Demo
+                    </button>
+                    <a href="#advisor" class="px-4 py-2 text-xs sm:text-sm font-semibold bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl transition-all shadow-md shadow-brand-500/20 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Optimizar Ahorro
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Top Metrics Cards & Health Score -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card: Ingreso Total -->
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold tracking-wider uppercase">Ingresos Mensuales</span>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center rotate-45 text-sm"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-bold text-white" id="metricIncome">$0</span>
+                    <span class="text-xs text-slate-400">/mes</span>
+                </div>
+                <div class="mt-3 text-xs text-slate-400 flex items-center justify-between border-t border-slate-700/50 pt-2">
+                    <span>Base disponible</span>
+                    <button onclick="openIncomeModal()" class="text-brand-400 hover:underline font-medium">Editar Ingreso</button>
+                </div>
+            </div>
+
+            <!-- Card: Gastos Totales -->
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold tracking-wider uppercase">Gastos Mensuales</span>
+                    <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-bold text-white" id="metricExpenses">$0</span>
+                    <span class="text-xs text-slate-400">/mes</span>
+                </div>
+                <div class="mt-3 text-xs text-slate-400 flex items-center justify-between border-t border-slate-700/50 pt-2">
+                    <span id="metricExpensesRatio">0% del ingreso</span>
+                    <span class="text-rose-400 font-medium" id="metricFixedVSVar">F:0% / V:0%</span>
+                </div>
+            </div>
+
+            <!-- Card: Capacidad de Ahorro -->
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold tracking-wider uppercase">Margen de Ahorro Net</span>
+                    <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center">
+                        <i class="fa-solid fa-piggy-bank text-sm"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-bold text-brand-400" id="metricSavings">$0</span>
+                    <span class="text-xs text-slate-400">/mes</span>
+                </div>
+                <div class="mt-3 text-xs text-slate-400 flex items-center justify-between border-t border-slate-700/50 pt-2">
+                    <span>Tasa de Ahorro actual:</span>
+                    <span class="font-bold text-white" id="metricSavingsRate">0%</span>
+                </div>
+            </div>
+
+            <!-- Card: Salud Financiera (Score) -->
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold tracking-wider uppercase">Salud Financiera</span>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                        <i class="fa-solid fa-heart-pulse text-sm"></i>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl font-bold text-white" id="healthScore">0/100</span>
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-700 text-slate-300" id="healthScoreBadge">Analizando</span>
+                </div>
+                <div class="mt-3 border-t border-slate-700/50 pt-2">
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                        <div id="healthProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section 2: Charts & Transaction Control -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Panel: Transaction Manager & Input (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Quick Transaction Form -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-plus text-brand-400"></i> Registrar Nuevo Gasto o Ingreso
+                    </h3>
+                    <form id="transactionForm" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Descripción / Concepto</label>
+                                <input type="text" id="txName" required placeholder="Ej. Mercado semanal, Renta, Netflix" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Monto ($ MXN / USD)</label>
+                                <input type="number" id="txAmount" required step="0.01" min="0.01" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Tipo</label>
+                                <select id="txType" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors">
+                                    <option value="expense">Gasto</option>
+                                    <option value="income">Ingreso Adicional</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Categoría</label>
+                                <select id="txCategory" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors">
+                                    <option value="vivienda">Vivienda y Servicios</option>
+                                    <option value="alimentacion">Alimentación y Súper</option>
+                                    <option value="transporte">Transporte / Auto</option>
+                                    <option value="estilo_vida">Entretenimiento / Gustos</option>
+                                    <option value="suscripciones">Suscripciones y Apps</option>
+                                    <option value="deudas">Pago de Deudas</option>
+                                    <option value="otros">Otros / Varios</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Naturaleza del Gasto</label>
+                                <select id="txNature" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors">
+                                    <option value="fixed">Fijo (Imprescindible)</option>
+                                    <option value="variable">Variable (Optimizable)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-2.5 bg-slate-700 hover:bg-brand-600 hover:text-slate-950 font-semibold text-sm rounded-xl text-white transition-all duration-200 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Guardar Transacción
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Transaction List -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-slate-400"></i> Lista de Transacciones
+                        </h3>
+                        <span class="text-xs text-slate-400" id="txCount">0 registradas</span>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar max-h-[350px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs font-semibold text-slate-400 border-b border-slate-700 pb-2">
+                                    <th class="pb-2">Concepto</th>
+                                    <th class="pb-2">Categoría</th>
+                                    <th class="pb-2">Tipo</th>
+                                    <th class="pb-2 text-right">Monto</th>
+                                    <th class="pb-2 text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionList" class="divide-y divide-slate-700/50 text-sm">
+                                <!-- Dynamic JavaScript Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: Visual Analytics Charts (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                <!-- Doughnut Chart: Expenses by Category -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brand-400"></i> Distribución de Gastos
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Visualiza exactamente en qué se va tu dinero cada mes.</p>
+                    <div class="relative w-full h-64 flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Comparison: Fixed vs Variable Bar -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-indigo-400"></i> Gastos Fijos vs Variables
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Los gastos variables son el mejor lugar para recortar y recortar rápido.</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-300">Gastos Fijos (Renta, servicios, compromisos)</span>
+                                <span id="labelFixedSum" class="text-slate-300">$0</span>
+                            </div>
+                            <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                                <div id="barFixed" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-amber-400">Gastos Variables (Restaurantes, streaming, caprichos)</span>
+                                <span id="labelVariableSum" class="text-amber-400">$0</span>
+                            </div>
+                            <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                                <div id="barVariable" class="bg-amber-400 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section 3: SAVINGS OPTIMIZATION ENGINE & ADVISOR -->
+        <section id="advisor" class="bg-slate-800/90 border border-brand-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-400 border border-brand-500/30 uppercase tracking-wider">
+                        Motor de Optimización Inteligente
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-2">¿Cuál es la mejor manera de ahorrar para ti?</h2>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-700">
+                    <button id="btnStrategy503020" onclick="switchStrategy('503020')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all bg-brand-500 text-slate-950">Regla 50/30/20</button>
+                    <button id="btnStrategyPayFirst" onclick="switchStrategy('payfirst')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white">Págate a ti Primero</button>
+                    <button id="btnStrategyEmergency" onclick="switchStrategy('emergency')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white">Fondo de Emergencia</button>
+                </div>
+            </div>
+
+            <!-- Strategy Detail Box -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Strategy Explanation -->
+                <div class="lg:col-span-1 bg-slate-900/80 border border-slate-700/80 rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-lg font-bold text-brand-400 mb-2" id="stratTitle">Regla 50 / 30 / 20</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4" id="stratDescription">
+                            Divide tus ingresos en 3 bloques claros: 50% para Necesidades Básicas (fijos), 30% para Estilo de Vida y Deseos (variables), y 20% destinado exclusivamente al Ahorro o Inversión.
+                        </p>
+                    </div>
+                    <div class="border-t border-slate-800 pt-3">
+                        <span class="text-xs text-slate-400 block font-medium">Recomendación Actual:</span>
+                        <p class="text-xs font-semibold text-emerald-400 mt-1" id="stratRecommendation">Calculando recomendación personalizada...</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Strategy Breakdown & Target Vs Actual -->
+                <div class="lg:col-span-2 bg-slate-900/80 border border-slate-700/80 rounded-2xl p-5 space-y-5">
+                    <h4 class="text-sm font-bold text-white uppercase tracking-wider">Comparativa de tu Presupuesto vs Ideal</h4>
+                    
+                    <div id="strategyBarsContainer" class="space-y-4">
+                        <!-- Dynamic strategy sliders / bars generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Savings Simulator (Cut-back calculator) -->
+            <div class="mt-8 border-t border-slate-700/60 pt-6">
+                <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-amber-400"></i> Simulador de Recortes e Impacto en Tiempo Real
+                </h3>
+                <p class="text-xs text-slate-400 mb-6">Ajusta la barra para reducir tus gastos variables opcionales y mira cuánto acumularás en el futuro.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <div class="md:col-span-6 bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-bold text-slate-200">Reducción propuesta en gastos variables:</label>
+                            <span class="text-sm font-extrabold text-amber-400" id="sliderValue">15%</span>
+                        </div>
+                        <input type="range" id="cutbackSlider" min="0" max="60" value="15" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-500">
+                        <div class="flex justify-between text-[10px] text-slate-500 font-semibold">
+                            <span>0% (Sin cambios)</span>
+                            <span>30% (Moderado)</span>
+                            <span>60% (Agresivo)</span>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-6 grid grid-cols-2 gap-4">
+                        <div class="bg-slate-900/90 p-4 rounded-2xl border border-brand-500/30 text-center">
+                            <span class="text-xs text-slate-400 font-medium block">Ahorro Extra Proyectado (1 Año)</span>
+                            <span class="text-xl sm:text-2xl font-black text-brand-400 mt-1 block" id="proj1Year">$0</span>
+                            <span class="text-[10px] text-slate-500 block">invertido con rendimiento base</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-4 rounded-2xl border border-indigo-500/30 text-center">
+                            <span class="text-xs text-slate-400 font-medium block">Patrimonio Proyectado (5 Años)</span>
+                            <span class="text-xl sm:text-2xl font-black text-indigo-400 mt-1 block" id="proj5Year">$0</span>
+                            <span class="text-[10px] text-slate-500 block">considerando 8% anual prom.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal for Editing Base Income -->
+    <div id="incomeModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+            <h3 class="text-lg font-bold text-white mb-2">Configurar Ingreso Mensual Base</h3>
+            <p class="text-xs text-slate-400 mb-4">Ingresa tu sueldo o ingresos fijos del mes para calcular tu capacidad real de ahorro.</p>
+            <input type="number" id="inputBaseIncome" step="100" placeholder="Ej. 25000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-bold text-lg focus:outline-none focus:border-brand-500 mb-4">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeIncomeModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl">Cancelar</button>
+                <button onclick="saveBaseIncome()" class="px-4 py-2 text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl">Guardar Ingreso</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-6 text-center text-xs text-slate-500">
+        <p>AhorraMax Micro-App &copy; 2026. Proyecto listo para empaquetar y monetizar como Micro-SaaS.</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Default Mock Data for immediate demo visualization
+        const DEFAULT_DATA = {
+            baseIncome: 25000,
+            transactions: [
+                { id: 1, name: "Renta de Departamento", amount: 8500, type: "expense", category: "vivienda", nature: "fixed" },
+                { id: 2, name: "Supermercado Mensual", amount: 4200, type: "expense", category: "alimentacion", nature: "variable" },
+                { id: 3, name: "Luz, Agua e Internet", amount: 1300, type: "expense", category: "vivienda", nature: "fixed" },
+                { id: 4, name: "Gimnasio y Apps", amount: 950, type: "expense", category: "suscripciones", nature: "variable" },
+                { id: 5, name: "Salidas y Restaurantes", amount: 3200, type: "expense", category: "estilo_vida", nature: "variable" },
+                { id: 6, name: "Proyecto Freelance Extra", amount: 3500, type: "income", category: "otros", nature: "fixed" }
+            ]
+        };
+
+        // Application State
+        let state = JSON.parse(localStorage.getItem('ahorramax_data')) || DEFAULT_DATA;
+        let currentStrategy = '503020';
+        let categoryChartInstance = null;
+
+        // Categories Configuration
+        const CATEGORIES = {
+            vivienda: { name: "Vivienda y Servicios", color: "#3b82f6" },
+            alimentacion: { name: "Alimentación", color: "#10b981" },
+            transporte: { name: "Transporte / Auto", color: "#f59e0b" },
+            estilo_vida: { name: "Entretenimiento", color: "#ec4899" },
+            suscripciones: { name: "Suscripciones", color: "#8b5cf6" },
+            deudas: { name: "Pago Deudas", color: "#ef4444" },
+            otros: { name: "Otros", color: "#64748b" }
+        };
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            renderApp();
+            
+            // Event Listeners
+            document.getElementById('transactionForm').addEventListener('submit', handleAddTransaction);
+            document.getElementById('cutbackSlider').addEventListener('input', updateCutbackSimulation);
+            document.getElementById('resetDataBtn').addEventListener('click', resetDemoData);
+        });
+
+        // Save State to LocalStorage
+        function saveState() {
+            localStorage.setItem('ahorramax_data', JSON.stringify(state));
+            renderApp();
+        }
+
+        function resetDemoData() {
+            state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            saveState();
+        }
+
+        // Render Entire App Metrics & UI
+        function renderApp() {
+            const totalAddIncome = state.transactions
+                .filter(t => t.type === 'income')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const totalIncome = state.baseIncome + totalAddIncome;
+
+            const totalExpenses = state.transactions
+                .filter(t => t.type === 'expense')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const fixedExpenses = state.transactions
+                .filter(t => t.type === 'expense' && t.nature === 'fixed')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const variableExpenses = state.transactions
+                .filter(t => t.type === 'expense' && t.nature === 'variable')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const netSavings = totalIncome - totalExpenses;
+            const savingsRate = totalIncome > 0 ? (netSavings / totalIncome) * 100 : 0;
+
+            // Render Metrics Cards
+            document.getElementById('metricIncome').innerText = formatCurrency(totalIncome);
+            document.getElementById('metricExpenses').innerText = formatCurrency(totalExpenses);
+            document.getElementById('metricExpensesRatio').innerText = `${Math.round((totalExpenses / (totalIncome || 1)) * 100)}% del ingreso`;
+            
+            const fixedPct = totalExpenses > 0 ? Math.round((fixedExpenses / totalExpenses) * 100) : 0;
+            const varPct = totalExpenses > 0 ? Math.round((variableExpenses / totalExpenses) * 100) : 0;
+            document.getElementById('metricFixedVSVar').innerText = `F:${fixedPct}% / V:${varPct}%`;
+
+            document.getElementById('metricSavings').innerText = formatCurrency(netSavings);
+            document.getElementById('metricSavingsRate').innerText = `${savingsRate.toFixed(1)}%`;
+
+            // Fixed vs Variable Bars
+            document.getElementById('labelFixedSum').innerText = formatCurrency(fixedExpenses);
+            document.getElementById('labelVariableSum').innerText = formatCurrency(variableExpenses);
+            document.getElementById('barFixed').style.width = `${totalIncome > 0 ? (fixedExpenses / totalIncome) * 100 : 0}%`;
+            document.getElementById('barVariable').style.width = `${totalIncome > 0 ? (variableExpenses / totalIncome) * 100 : 0}%`;
+
+            // Calculate Health Score
+            calculateHealthScore(savingsRate, fixedExpenses, totalIncome);
+
+            // Render Transaction Table
+            renderTransactionList();
+
+            // Update Chart
+            updateChart();
+
+            // Render Advisor Strategy
+            renderAdvisor(totalIncome, fixedExpenses, variableExpenses, netSavings);
+
+            // Update Cutback Slider Simulation
+            updateCutbackSimulation();
+        }
+
+        // Calculate Financial Health Score (0 to 100)
+        function calculateHealthScore(savingsRate, fixedExpenses, totalIncome) {
+            let score = 0;
+            
+            // Savings rate points (up to 50 pts)
+            if (savingsRate >= 20) score += 50;
+            else if (savingsRate > 0) score += Math.round((savingsRate / 20) * 50);
+
+            // Fixed expense ratio points (up to 50 pts) - ideally fixed < 50% of income
+            const fixedRatio = totalIncome > 0 ? (fixedExpenses / totalIncome) : 1;
+            if (fixedRatio <= 0.5) score += 50;
+            else if (fixedRatio < 0.8) score += Math.round((1 - (fixedRatio - 0.5) / 0.3) * 50);
+
+            score = Math.min(100, Math.max(0, score));
+
+            const scoreEl = document.getElementById('healthScore');
+            const badgeEl = document.getElementById('healthScoreBadge');
+            const progressEl = document.getElementById('healthProgressBar');
+
+            scoreEl.innerText = `${score}/100`;
+            progressEl.style.width = `${score}%`;
+
+            if (score >= 80) {
+                badgeEl.innerText = "Excelente";
+                badgeEl.className = "px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                progressEl.className = "bg-emerald-400 h-full transition-all duration-500";
+            } else if (score >= 50) {
+                badgeEl.innerText = "Estable";
+                badgeEl.className = "px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                progressEl.className = "bg-amber-400 h-full transition-all duration-500";
+            } else {
+                badgeEl.innerText = "Riesgo";
+                badgeEl.className = "px-2 py-0.5 text-xs font-semibold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30";
+                progressEl.className = "bg-rose-500 h-full transition-all duration-500";
+            }
+        }
+
+        // Handle Add Transaction
+        function handleAddTransaction(e) {
+            e.preventDefault();
+            const name = document.getElementById('txName').value.trim();
+            const amount = parseFloat(document.getElementById('txAmount').value);
+            const type = document.getElementById('txType').value;
+            const category = document.getElementById('txCategory').value;
+            const nature = document.getElementById('txNature').value;
+
+            if (!name || isNaN(amount) || amount <= 0) return;
+
+            const newTx = {
+                id: Date.now(),
+                name,
+                amount,
+                type,
+                category,
+                nature
+            };
+
+            state.transactions.unshift(newTx);
+            saveState();
+
+            // Reset Form
+            document.getElementById('txName').value = '';
+            document.getElementById('txAmount').value = '';
+        }
+
+        // Delete Transaction
+        function deleteTransaction(id) {
+            state.transactions = state.transactions.filter(t => t.id !== id);
+            saveState();
+        }
+
+        // Render Transactions List
+        function renderTransactionList() {
+            const listEl = document.getElementById('transactionList');
+            document.getElementById('txCount').innerText = `${state.transactions.length} registradas`;
+
+            if (state.transactions.length === 0) {
+                listEl.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500 text-xs">No hay transacciones registradas.</td></tr>`;
+                return;
+            }
+
+            listEl.innerHTML = state.transactions.map(t => {
+                const isExpense = t.type === 'expense';
+                const catName = CATEGORIES[t.category] ? CATEGORIES[t.category].name : t.category;
+                return `
+                    <tr class="hover:bg-slate-700/30 transition-colors">
+                        <td class="py-3 font-medium text-white">${escapeHtml(t.name)}</td>
+                        <td class="py-3 text-slate-400 text-xs">
+                            <span class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700">${catName}</span>
+                        </td>
+                        <td class="py-3 text-xs">
+                            <span class="${isExpense ? 'text-rose-400' : 'text-emerald-400'} font-semibold">
+                                ${isExpense ? (t.nature === 'fixed' ? 'Gasto Fijo' : 'Gasto Var.') : 'Ingreso'}
+                            </span>
+                        </td>
+                        <td class="py-3 text-right font-bold ${isExpense ? 'text-slate-200' : 'text-emerald-400'}">
+                            ${isExpense ? '-' : '+'}${formatCurrency(t.amount)}
+                        </td>
+                        <td class="py-3 text-center">
+                            <button onclick="deleteTransaction(${t.id})" class="text-slate-500 hover:text-rose-400 transition-colors">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Chart.js Category Breakdown Initialization
+        function initChart() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Update Chart Data
+        function updateChart() {
+            if (!categoryChartInstance) return;
+
+            const categoryTotals = {};
+            state.transactions
+                .filter(t => t.type === 'expense')
+                .forEach(t => {
+                    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+                });
+
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            Object.keys(categoryTotals).forEach(catKey => {
+                labels.push(CATEGORIES[catKey] ? CATEGORIES[catKey].name : catKey);
+                data.push(categoryTotals[catKey]);
+                colors.push(CATEGORIES[catKey] ? CATEGORIES[catKey].color : '#64748b');
+            });
+
+            categoryChartInstance.data.labels = labels;
+            categoryChartInstance.data.datasets[0].data = data;
+            categoryChartInstance.data.datasets[0].backgroundColor = colors;
+            categoryChartInstance.update();
+        }
+
+        // Savings Strategy Engine Selector
+        function switchStrategy(strategy) {
+            currentStrategy = strategy;
+            
+            // Toggle Buttons UI
+            ['503020', 'payfirst', 'emergency'].forEach(s => {
+                const btn = document.getElementById(`btnStrategy${s.charAt(0).toUpperCase() + s.slice(1)}`);
+                if (s === strategy) {
+                    btn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition-all bg-brand-500 text-slate-950";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white";
+                }
+            });
+
+            renderApp();
+        }
+
+        // Strategy Advisor Calculation Logic
+        function renderAdvisor(income, fixed, variable, netSavings) {
+            const titleEl = document.getElementById('stratTitle');
+            const descEl = document.getElementById('stratDescription');
+            const recEl = document.getElementById('stratRecommendation');
+            const containerEl = document.getElementById('strategyBarsContainer');
+
+            if (currentStrategy === '503020') {
+                titleEl.innerText = "Regla Presupuestaria 50 / 30 / 20";
+                descEl.innerText = "Es el estándar ideal. Asigna 50% de tus ingresos a necesidades básicas (gastos fijos), 30% a estilo de vida (variables) y 20% obligatoriamente a ahorro.";
+                
+                const targetNeeds = income * 0.5;
+                const targetWants = income * 0.3;
+                const targetSavings = income * 0.2;
+
+                recEl.innerText = fixed > targetNeeds 
+                    ? "Tus gastos fijos superan el 50% ideal. Considera renegociar servicios o renta."
+                    : "Tus gastos fijos están dentro del margen óptimo (menos del 50%).";
+
+                containerEl.innerHTML = `
+                    ${createProgressBar("Necesidades Básicas (Ideal 50%)", fixed, targetNeeds, "bg-blue-500")}
+                    ${createProgressBar("Estilo de Vida / Variables (Ideal 30%)", variable, targetWants, "bg-amber-400")}
+                    ${createProgressBar("Meta de Ahorro / Inversión (Ideal 20%)", Math.max(0, netSavings), targetSavings, "bg-brand-500")}
+                `;
+
+            } else if (currentStrategy === 'payfirst') {
+                titleEl.innerText = "Estrategia: Págate a Ti Mismo Primero";
+                descEl.innerText = "En lugar de ahorrar lo que te sobra al final del mes, aparta un % de ahorro tan pronto recibas tu ingreso. Vive con el remanente.";
+                
+                const suggestedSavings = income * 0.15; // 15% default goal
+                const availableForLiving = income - suggestedSavings;
+
+                recEl.innerText = `Aparta automáticamente ${formatCurrency(suggestedSavings)} el día de tu cobro y limítate a gastar máximo ${formatCurrency(availableForLiving)}.`;
+
+                containerEl.innerHTML = `
+                    ${createProgressBar("Ahorro Automático Inmediato (15%)", Math.max(0, netSavings), suggestedSavings, "bg-brand-500")}
+                    ${createProgressBar("Presupuesto Disponible para Gastar", fixed + variable, availableForLiving, "bg-indigo-500")}
+                `;
+
+            } else if (currentStrategy === 'emergency') {
+                titleEl.innerText = "Estrategia: Fondo de Emergencia de 3 a 6 Meses";
+                descEl.innerText = "Antes de realizar inversiones de riesgo o compras mayores, acumula entre 3 y 6 meses de tus gastos fijos indispensables para darte paz mental.";
+                
+                const monthlyFixedTarget = fixed > 0 ? fixed : income * 0.5;
+                const target3Months = monthlyFixedTarget * 3;
+                const target6Months = monthlyFixedTarget * 6;
+
+                recEl.innerText = `Tu fondo de reserva básico (3 meses) debe ser de ${formatCurrency(target3Months)}. Con tu ahorro mensual actual te tomaría unos ${netSavings > 0 ? Math.ceil(target3Months / netSavings) : '∞'} meses construirlo.`;
+
+                containerEl.innerHTML = `
+                    ${createProgressBar("Gasto Fijo Indispensable Mensual", fixed, monthlyFixedTarget, "bg-rose-400")}
+                    ${createProgressBar("Meta Fondo Emergencia (3 Meses)", Math.max(0, netSavings * 6), target3Months, "bg-emerald-400")}
+                `;
+            }
+        }
+
+        // Render Strategy Progress Bar Item
+        function createProgressBar(label, current, target, colorClass) {
+            const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+            return `
+                <div>
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-300">${label}</span>
+                        <span class="text-slate-300">${formatCurrency(current)} / <span class="text-slate-500">Meta: ${formatCurrency(target)}</span></span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div class="${colorClass} h-full transition-all duration-300" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Cutback Simulator Logic
+        function updateCutbackSimulation() {
+            const cutbackPct = parseInt(document.getElementById('cutbackSlider').value);
+            document.getElementById('sliderValue').innerText = `${cutbackPct}%`;
+
+            const variableExpenses = state.transactions
+                .filter(t => t.type === 'expense' && t.nature === 'variable')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const monthlyCutbackSavings = variableExpenses * (cutbackPct / 100);
+            
+            // Compound Interest / Future Value Projection
+            // Proj 1 Year (with 5% annual return)
+            const annualSavings1Yr = monthlyCutbackSavings * 12 * 1.05;
+            
+            // Proj 5 Years (with 8% average return formula)
+            const r = 0.08 / 12;
+            const n = 60;
+            const annualSavings5Yr = monthlyCutbackSavings * ((Math.pow(1 + r, n) - 1) / r);
+
+            document.getElementById('proj1Year').innerText = formatCurrency(annualSavings1Yr);
+            document.getElementById('proj5Year').innerText = formatCurrency(annualSavings5Yr);
+        }
+
+        // Modal Handlers
+        function openIncomeModal() {
+            document.getElementById('inputBaseIncome').value = state.baseIncome;
+            document.getElementById('incomeModal').classList.remove('hidden');
+        }
+
+        function closeIncomeModal() {
+            document.getElementById('incomeModal').classList.add('hidden');
+        }
+
+        function saveBaseIncome() {
+            const newIncome = parseFloat(document.getElementById('inputBaseIncome').value);
+            if (!isNaN(newIncome) && newIncome >= 0) {
+                state.baseIncome = newIncome;
+                saveState();
+                closeIncomeModal();
+            }
+        }
+
+        // Helpers
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(val);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
